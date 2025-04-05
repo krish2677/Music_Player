@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music Player</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://kit.fontawesome.com/e459f9f655.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <header class="top-bar">
+        <h1 class="page-title"><i class="fa-solid fa-music"></i> My Music</h1>
+        <div class="top-controls">
+            <input type="text" id="searchBar" placeholder="Search songs...">
+            
+            <label for="themeColorPicker" class="color-picker-label">
+                🎨
+                <input type="color" id="themeColorPicker" />
+            </label>
+            <button id="darkModeToggle"><i class="fa-solid fa-moon"></i></button>
+        </div>
+    </header>
+
+    <div class="now-playing-banner" id="nowPlayingBanner">
+        🎧 Now Playing: <span id="nowPlayingTitle">None</span>
+    </div>
+
+    <div class="container">
+        <div class="song-list-wrapper" id="songView"></div>
+
+        <div class="music-player" id="playerView" style="display: none;">
+            <nav>
+                <div class="circle" id="backBtn">
+                    <i class="fa-solid fa-angle-left"></i>
+                </div>
+            </nav>
+            <img id="playerImage" class="song-img" src="" alt="">
+            <h1 id="playerTitle"></h1>
+            <p id="playerArtist"></p>
+            <audio id="song">
+                <source id="audioSource" src="" type="audio/mpeg">
+            </audio>
+            <input type="range" value="0" id="progress">
+            <div class="controls">
+                <div id="prevBtn"><i class="fa-solid fa-backward-step"></i></div>
+                <div id="playPauseBtn"><i class="fa-solid fa-play" id="ctrlIcon"></i></div>
+                <div id="nextBtn"><i class="fa-solid fa-forward-step"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const songs = [
+            {
+                title: "Boom Kitty, TOKYO MACHINE",
+                artist: "Warriyo - Mortals",
+                index: 0,
+                img: "media/mortals.jpg",
+                file: "media/Boom Kitty, TOKYO MACHINE, Warriyo - Mortals (TOKYO MACHINE & Boom Kitty Remix) [NCS Release].mp3"
+            },
+            {
+                title: "Elektronomia",
+                artist: "Sky High",
+                index: 1,
+                img: "media/skyhigh.jpg",
+                file: "media/Elektronomia - Sky High.mp3"
+            },
+            {
+                title: "Fading Light",
+                artist: "Fytch",
+                index: 2,
+                img: "media/fadinglight.jpg",
+                file: "media/Fytch - Fading Light [NCS Release].mp3"
+            }
+        ];
+
+        const songView = document.getElementById("songView");
+        const playerView = document.getElementById("playerView");
+        const searchBar = document.getElementById("searchBar");
+        const darkModeToggle = document.getElementById("darkModeToggle");
+        const nowPlayingBanner = document.getElementById("nowPlayingBanner");
+        const nowPlayingTitle = document.getElementById("nowPlayingTitle");
+        const songImg = document.getElementById("playerImage");
+        const playerTitle = document.getElementById("playerTitle");
+        const playerArtist = document.getElementById("playerArtist");
+        const audioSource = document.getElementById("audioSource");
+        const audio = document.getElementById("song");
+        const ctrlIcon = document.getElementById("ctrlIcon");
+        const progress = document.getElementById("progress");
+        const themeColorPicker = document.getElementById("themeColorPicker");
+
+        let currentIndex = 0;
+
+        function renderSongList(filter = "") {
+            songView.innerHTML = "";
+            const grid = document.createElement("div");
+            grid.classList.add("song-grid");
+
+            const filtered = songs.filter(song =>
+                song.title.toLowerCase().includes(filter.toLowerCase()) ||
+                song.artist.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                songView.innerHTML = `<p class="no-results">No results found.</p>`;
+                return;
+            }
+
+            filtered.forEach(song => {
+                const div = document.createElement("div");
+                div.classList.add("song-card");
+                div.innerHTML = `
+                    <div class="song-card-inner">
+                        <img src="${song.img}" alt="${song.title}" />
+                        <div class="song-info">
+                            <h3>${song.title}</h3>
+                            <p>${song.artist}</p>
+                        </div>
+                    </div>
+                `;
+                div.onclick = () => playSong(song.index);
+                grid.appendChild(div);
+            });
+
+            songView.appendChild(grid);
+        }
+
+        function playSong(index) {
+            const song = songs[index];
+            currentIndex = index;
+            songImg.src = song.img;
+            playerTitle.textContent = song.title;
+            playerArtist.textContent = song.artist;
+            audioSource.src = song.file;
+            audio.load();
+            audio.play();
+            ctrlIcon.classList.remove("fa-play");
+            ctrlIcon.classList.add("fa-pause");
+            nowPlayingTitle.textContent = `${song.title} - ${song.artist}`;
+            songView.style.display = "none";
+            playerView.style.display = "block";
+        }
+
+        document.getElementById("backBtn").onclick = () => {
+            playerView.style.display = "none";
+            songView.style.display = "block";
+            searchBar.value = "";
+            renderSongList();
+        };
+
+        document.getElementById("playPauseBtn").onclick = () => {
+            if (audio.paused) {
+                audio.play();
+                ctrlIcon.classList.remove("fa-play");
+                ctrlIcon.classList.add("fa-pause");
+            } else {
+                audio.pause();
+                ctrlIcon.classList.remove("fa-pause");
+                ctrlIcon.classList.add("fa-play");
+            }
+        };
+
+        document.getElementById("nextBtn").onclick = () => {
+            currentIndex = (currentIndex + 1) % songs.length;
+            playSong(currentIndex);
+        };
+
+        document.getElementById("prevBtn").onclick = () => {
+            currentIndex = (currentIndex - 1 + songs.length) % songs.length;
+            playSong(currentIndex);
+        };
+
+        audio.onloadedmetadata = () => {
+            progress.max = audio.duration;
+            progress.value = audio.currentTime;
+        };
+
+        audio.ontimeupdate = () => {
+            progress.value = audio.currentTime;
+        };
+
+        progress.onchange = () => {
+            audio.currentTime = progress.value;
+        };
+
+        darkModeToggle.onclick = () => {
+            document.body.classList.toggle("dark-mode");
+        };
+
+        searchBar.oninput = (e) => {
+            const filter = e.target.value;
+            if (playerView.style.display === "block") {
+                playerView.style.display = "none";
+                songView.style.display = "block";
+            }
+            renderSongList(filter);
+        };
+
+        themeColorPicker.oninput = (e) => {
+            const newColor = e.target.value;
+            document.documentElement.style.setProperty('--accent-color', newColor);
+        };
+
+        window.onload = () => {
+            renderSongList();
+        };
+    </script>
+</body>
+
+</html>
