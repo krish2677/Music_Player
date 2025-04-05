@@ -17,6 +17,10 @@ A sleek and interactive music player web app built with HTML, CSS, and JavaScrip
 - **CSS**
 - **JavaScript**
 
+## 📸 Demo
+
+🔗 Live Preview: [https://krish2677.github.io/Music_Player/](https://krish2677.github.io/Music_Player/)
+
 
 ## 🎮 How to Use
 
